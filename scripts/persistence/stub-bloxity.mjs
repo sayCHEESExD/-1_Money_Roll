@@ -20,7 +20,7 @@
  * real route does for a token minted for another game.
  */
 const VERIFY_URL = 'https://api.bloxity.io/v1/auth/game-token/verify';
-const EXPECTED_SLUG = process.env.STUB_GAME_SLUG ?? 'money-escape';
+const EXPECTED_SLUG = process.env.STUB_GAME_SLUG ?? 'money-roll';
 
 const realFetch = globalThis.fetch;
 

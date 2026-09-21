@@ -125,24 +125,24 @@ export class BillStands {
     // The area's board, behind the back row on two posts, as the reference has it.
     const boardX = BILL_ROW.deckMaxX + 2;
     const boardZ = (BILL_ROW.firstZ + BILL_ROW.firstZ + BILL_ROW.spacingZ * (BILL_ROW.perRow - 1)) / 2;
-    const post = texturedBox(1.2, 16, 1.2, 4);
+    const post = texturedBox(1.2, 22, 1.2, 4);
     this.geometries.push(post);
     const postMaterial = this.lambert(0x2b3554, 0);
     for (const dz of [-14, 14]) {
       const mesh = new Mesh(post, postMaterial);
-      mesh.position.set(boardX, BILL_ROW.deckY + 8, boardZ + dz);
+      mesh.position.set(boardX, BILL_ROW.deckY + 11, boardZ + dz);
       this.root.add(mesh);
     }
     const board = new CanvasSign(34, 12, [
       { text: 'BILLS', size: 1, fill: '#ffffff', stroke: '#1c2233', strokeWidth: 0.16 },
       { text: 'EARN money FASTER!', size: 0.55, fill: '#ffe08a', stroke: '#1c2233', strokeWidth: 0.14 },
     ]);
-    board.mesh.position.set(boardX - 0.8, BILL_ROW.deckY + 15, boardZ);
+    board.mesh.position.set(boardX - 0.8, BILL_ROW.deckY + 19, boardZ);
     board.mesh.rotation.y = -Math.PI / 2;
     this.root.add(board.mesh);
     this.signs.push(board);
     const backing = new Mesh(texturedBox(1.4, 12, 36, 4), this.lambert(0xf0c95a, 0.1));
-    backing.position.set(boardX + 0.4, BILL_ROW.deckY + 15, boardZ);
+    backing.position.set(boardX + 0.4, BILL_ROW.deckY + 19, boardZ);
     this.root.add(backing);
 
     this.apply();

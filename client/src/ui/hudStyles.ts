@@ -462,27 +462,136 @@ body.aoe-touch-mode .aoe-account__name { max-width: 30vw; }
 .aoe-row__buy:disabled { background: linear-gradient(180deg, #c4c4c4, #9a9a9a); color: #fff; cursor: not-allowed; }
 
 /* ---- The Pets panel ------------------------------------------------------ */
-.me-pets__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(96px, calc(var(--hu) * 10)), 1fr)); gap: calc(var(--hu) * 0.8); }
-.me-pet {
+.me-pets__strip {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: calc(var(--hu) * 0.65);
+  margin-bottom: calc(var(--hu) * 1);
+}
+.me-pets__stat {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--hu) * 0.6);
+  padding: calc(var(--hu) * 0.55) calc(var(--hu) * 0.8);
   border: var(--gs-border) solid var(--gs-ink);
-  border-radius: calc(var(--hu) * 1.15);
-  background: linear-gradient(180deg, #ffffff, #e9e9e9);
-  padding: calc(var(--hu) * 0.65) calc(var(--hu) * 0.5) calc(var(--hu) * 0.5);
+  border-radius: calc(var(--hu) * 1);
+  background: linear-gradient(180deg, #ffffff, #dfe6f2);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  min-width: 0;
+}
+.me-pets__stat--boost { background: linear-gradient(180deg, #e9ffdf, #b9f0a8); }
+.me-pets__stat-icon { flex: none; width: max(22px, calc(var(--hu) * 2.6)); height: max(22px, calc(var(--hu) * 2.6)); display: grid; place-items: center; }
+.me-pets__stat-icon .aoe-icon { width: 100%; height: 100%; object-fit: contain; }
+.me-pets__stat-text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; flex: 1; }
+.me-pets__stat-text small { font-size: max(9px, calc(var(--hu) * 0.95)); color: #5a6478; font-weight: 700; }
+.me-pets__stat-text span { font-size: max(13px, calc(var(--hu) * 1.6)); font-weight: 700; color: var(--gs-ink); }
+.me-pets__bar { height: max(5px, calc(var(--hu) * 0.5)); border-radius: 999px; background: rgba(0, 0, 0, 0.12); overflow: hidden; margin-top: 3px; }
+.me-pets__bar-fill { height: 100%; background: linear-gradient(90deg, #5ee0ff, #1fa8e8); border-radius: 999px; transition: width 200ms ease-out; }
+.me-pets__plus {
+  flex: none;
+  width: max(22px, calc(var(--hu) * 2.2)); height: max(22px, calc(var(--hu) * 2.2));
+  border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink); border-radius: calc(var(--hu) * 0.6);
+  background: linear-gradient(180deg, #7ee36a, #2f9e2b); color: #fff; font: inherit; font-weight: 700; cursor: pointer; line-height: 1;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.me-pets__empty {
+  text-align: center;
+  padding: calc(var(--hu) * 2.4) calc(var(--hu) * 1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--hu) * 0.35);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
-  cursor: pointer;
-  text-align: center;
+  gap: calc(var(--hu) * 0.5);
 }
-.me-pet--equipped { background: linear-gradient(180deg, #ffe9a6, #ffc94a); }
-.me-pet--delete { background: linear-gradient(180deg, #ffd6d6, #ff9c9c); }
-.me-pet__icon { width: max(36px, calc(var(--hu) * 3.8)); height: max(36px, calc(var(--hu) * 3.8)); border-radius: calc(var(--hu) * 0.8); border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink); display: grid; place-items: center; font-size: max(16px, calc(var(--hu) * 1.8)); color: #fff; }
-.me-pet__name { font-size: max(11px, calc(var(--hu) * 1.15)); line-height: 1.1; }
-.me-pet__rarity { font-size: max(10px, calc(var(--hu) * 1)); }
-.me-pet__boost { font-size: max(10px, calc(var(--hu) * 1)); color: #1f8f2b; }
-.me-pet__state { font-size: max(9px, calc(var(--hu) * 0.92)); color: #d9741a; }
+.me-pets__empty[hidden], .me-pets__grid[hidden] { display: none !important; }
+.me-pets__empty .aoe-icon { width: max(56px, calc(var(--hu) * 7)); height: auto; opacity: 0.9; }
+.me-pets__empty div { font-size: max(18px, calc(var(--hu) * 2.2)); }
+.me-pets__empty small { font-size: max(11px, calc(var(--hu) * 1.2)); color: #5a6478; }
+.me-pets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(104px, calc(var(--hu) * 11)), 1fr));
+  gap: calc(var(--hu) * 0.8);
+}
+/* A PET CARD: a portrait on the rarity's colour, the name, the rarity, the boost, one button. */
+.me-pet {
+  --rarity: #8fd66a;
+  position: relative;
+  border: var(--gs-border) solid var(--gs-ink);
+  border-radius: calc(var(--hu) * 1.2);
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f6 100%);
+  padding: calc(var(--hu) * 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--hu) * 0.3);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  text-align: center;
+  overflow: hidden;
+  animation: me-card-in 260ms ease both;
+}
+.me-pet--equipped { box-shadow: 0 0 0 3px var(--rarity), 0 4px 0 rgba(0, 0, 0, 0.18); background: linear-gradient(180deg, #fffbe6, #ffe9a6); }
+.me-pet__ribbon {
+  position: absolute;
+  top: calc(var(--hu) * 0.9);
+  right: calc(var(--hu) * -2.6);
+  transform: rotate(38deg);
+  width: calc(var(--hu) * 9);
+  padding: 2px 0;
+  background: linear-gradient(180deg, #5ed64f, #2f9e2b);
+  color: #fff;
+  font-size: max(8px, calc(var(--hu) * 0.8));
+  letter-spacing: 0.06em;
+  border-top: 2px solid var(--gs-ink);
+  border-bottom: 2px solid var(--gs-ink);
+  pointer-events: none;
+}
+.me-pet__portrait, .me-egg__portrait {
+  position: relative;
+  width: max(56px, calc(var(--hu) * 6.4));
+  height: max(56px, calc(var(--hu) * 6.4));
+  border-radius: calc(var(--hu) * 0.9);
+  border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink);
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, var(--rarity) 70%, var(--rarity) 100%);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-size: max(18px, calc(var(--hu) * 2.2));
+  color: #fff;
+}
+.me-pet__portrait img, .me-egg__portrait img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35)); }
+.me-pet__name { font-size: max(11px, calc(var(--hu) * 1.2)); line-height: 1.1; color: var(--gs-ink); }
+.me-pet__rarity, .me-egg__rarity {
+  font-size: max(9px, calc(var(--hu) * 0.9));
+  padding: 1px calc(var(--hu) * 0.6);
+  border-radius: 999px;
+  background: var(--rarity);
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.me-pet__boost { display: inline-flex; align-items: center; gap: 4px; font-size: max(10px, calc(var(--hu) * 1)); color: #1f8f2b; }
+.me-pet__boost .aoe-icon { height: 1.1em; width: auto; }
+.me-pet__action {
+  width: 100%;
+  margin-top: calc(var(--hu) * 0.2);
+  border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink);
+  border-radius: calc(var(--hu) * 0.8);
+  padding: calc(var(--hu) * 0.45) 0;
+  color: #fff;
+  font: inherit;
+  font-family: var(--gs-font);
+  font-weight: 700;
+  font-size: max(11px, calc(var(--hu) * 1.1));
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+.me-pet__action:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); }
+.me-pet__action--equip { background: linear-gradient(180deg, #7ee36a, #2f9e2b); }
+.me-pet__action--unequip { background: linear-gradient(180deg, #56d4ff, #1fa8e8); }
+.me-pet__action--delete { background: linear-gradient(180deg, #ff6b6b, #c92a2a); }
+.me-pet__action:disabled { background: linear-gradient(180deg, #c4c4c4, #9a9a9a); cursor: not-allowed; }
+.me-pets__grid--delete .me-pet { background: linear-gradient(180deg, #fff0f0, #ffd6d6); }
 .me-pets__foot {
   display: flex;
   align-items: center;
@@ -491,77 +600,126 @@ body.aoe-touch-mode .aoe-account__name { max-width: 30vw; }
   margin-top: calc(var(--hu) * 1);
   flex-wrap: wrap;
 }
-.me-pets__count {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--hu) * 0.5);
-  padding: calc(var(--hu) * 0.65) calc(var(--hu) * 1);
-  border: var(--gs-border) solid var(--gs-ink);
-  border-radius: calc(var(--hu) * 1);
-  background: linear-gradient(180deg, #ffffff, #dcdcdc);
-  font-size: max(12px, calc(var(--hu) * 1.6));
-}
-.me-pets__count .aoe-icon { height: max(16px, calc(var(--hu) * 1.8)); width: auto; }
-.me-pets__plus {
-  width: max(22px, calc(var(--hu) * 2.2)); height: max(22px, calc(var(--hu) * 2.2)); border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink); border-radius: calc(var(--hu) * 0.6);
-  background: linear-gradient(180deg, #7ee36a, #2f9e2b); color: #fff; font: inherit; font-weight: 700; cursor: pointer; line-height: 1;
+.me-pets__foot .aoe-row__buy { display: inline-flex; align-items: center; gap: 6px; }
+.me-pets__foot .aoe-row__buy .aoe-icon { height: 1.3em; width: auto; }
+@keyframes me-card-in {
+  0% { opacity: 0; transform: translateY(8px) scale(0.94); }
+  100% { opacity: 1; transform: none; }
 }
 
-/* ---- The Egg prompt: a compact card beside an egg ----------------------- */
-/* Right edge, a little above the middle: clear of the jump button below and the account chip above. */
+/* ---- The Egg card: a gacha front beside an egg ------------------------- */
 .me-egg {
   position: fixed;
   right: max(calc(var(--hu) * 1.4), env(safe-area-inset-right, 0px));
   top: 50%;
-  transform: translateY(-40%);
-  width: min(calc(var(--hu) * 21), 44vw);
-  padding: calc(var(--hu) * 0.8) calc(var(--hu) * 0.8) calc(var(--hu) * 1);
+  transform: translateY(-45%);
+  width: min(calc(var(--hu) * 27), 46vw);
+  padding: calc(var(--hu) * 0.9);
   border: var(--gs-border) solid var(--gs-ink);
-  border-radius: calc(var(--hu) * 1.3);
-  background: rgba(20, 24, 40, 0.86);
+  border-radius: calc(var(--hu) * 1.5);
+  background: linear-gradient(180deg, rgba(38, 44, 70, 0.94), rgba(20, 24, 40, 0.94));
   color: #ffffff;
   font-family: var(--gs-font);
   z-index: 24;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
 }
 .me-egg[hidden] { display: none; }
-.me-egg__title { display: flex; justify-content: center; align-items: baseline; gap: calc(var(--hu) * 0.65); font-size: max(14px, calc(var(--hu) * 1.8)); margin-bottom: calc(var(--hu) * 0.65); }
-.me-egg__title small { font-size: max(11px, calc(var(--hu) * 1.25)); color: #ffd93d; }
-.me-egg__title .aoe-icon { height: max(12px, calc(var(--hu) * 1.5)); width: auto; }
-.me-egg__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--hu) * 0.5); margin-bottom: calc(var(--hu) * 0.65); }
-.me-egg__cell { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: max(10px, calc(var(--hu) * 1.1)); }
-.me-egg__cell b { font-size: max(11px, calc(var(--hu) * 1.15)); }
-.me-egg__pet { width: max(30px, calc(var(--hu) * 3.6)); height: max(30px, calc(var(--hu) * 3.6)); border-radius: calc(var(--hu) * 0.8); border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink); display: grid; place-items: center; font-size: max(14px, calc(var(--hu) * 1.65)); }
-.me-egg__pet--secret { background: #2b3040 !important; color: #8fa0c8; }
+.me-egg--in { animation: me-egg-in 280ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes me-egg-in { 0% { opacity: 0; transform: translateY(-45%) translateX(20px) scale(0.92); } 100% { opacity: 1; transform: translateY(-45%); } }
+.me-egg__head { display: flex; align-items: center; gap: calc(var(--hu) * 0.9); margin-bottom: calc(var(--hu) * 0.7); }
+/* THE EGG, drawn: the egg's colour with three spots and a shine, wobbling. */
+.me-egg__egg {
+  --egg: #ffffff; --spot: #4a9bff;
+  position: relative;
+  flex: none;
+  width: max(46px, calc(var(--hu) * 5.4));
+  height: max(58px, calc(var(--hu) * 6.8));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, var(--egg) 45%, color-mix(in srgb, var(--egg) 70%, #000) 100%);
+  border: max(2px, calc(var(--hu) * 0.25)) solid var(--gs-ink);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: me-egg-wobble 2.2s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.me-egg__spot { position: absolute; border-radius: 50%; background: var(--spot); opacity: 0.85; }
+.me-egg__spot--a { width: 32%; height: 22%; left: 18%; top: 28%; }
+.me-egg__spot--b { width: 24%; height: 18%; left: 58%; top: 50%; }
+.me-egg__spot--c { width: 20%; height: 14%; left: 30%; top: 68%; }
+.me-egg__shine { position: absolute; left: 22%; top: 12%; width: 22%; height: 14%; border-radius: 50%; background: rgba(255, 255, 255, 0.7); transform: rotate(-30deg); }
+@keyframes me-egg-wobble { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+.me-egg--crack .me-egg__egg { animation: me-egg-crack 520ms ease; }
+@keyframes me-egg-crack { 0% { transform: scale(1); } 30% { transform: scale(1.15) rotate(-8deg); } 60% { transform: scale(0.92) rotate(8deg); } 100% { transform: scale(1); } }
+.me-egg__text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.me-egg__title { font-size: max(16px, calc(var(--hu) * 2.1)); line-height: 1; }
+.me-egg__price {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  padding: 3px calc(var(--hu) * 0.8); border-radius: 999px;
+  background: linear-gradient(180deg, #ffe066, #ffa62b); color: #fff; border: 2px solid var(--gs-ink);
+  font-size: max(11px, calc(var(--hu) * 1.2)); text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+.me-egg__price .aoe-icon { height: 1.2em; width: auto; }
+.me-egg__label { display: flex; align-items: center; gap: 6px; font-size: max(10px, calc(var(--hu) * 1.05)); color: #b9c4e0; margin-bottom: calc(var(--hu) * 0.4); text-transform: uppercase; letter-spacing: 0.06em; }
+.me-egg__label .aoe-icon { height: 1.4em; width: auto; }
+.me-egg__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--hu) * 0.5); margin-bottom: calc(var(--hu) * 0.8); }
+.me-egg__card {
+  --rarity: #8fd66a;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: calc(var(--hu) * 0.4) calc(var(--hu) * 0.2);
+  border-radius: calc(var(--hu) * 0.9);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid color-mix(in srgb, var(--rarity) 70%, transparent);
+  animation: me-card-in 260ms ease both;
+}
+.me-egg__card .me-egg__portrait { width: max(40px, calc(var(--hu) * 4.6)); height: max(40px, calc(var(--hu) * 4.6)); }
+.me-egg__card--secret .me-egg__portrait img { filter: brightness(0) opacity(0.75); }
+.me-egg__secret { position: absolute; font-size: max(18px, calc(var(--hu) * 2.2)); color: #ffffff; text-shadow: 0 0 6px rgba(0, 0, 0, 0.8); }
+.me-egg__name { font-size: max(9px, calc(var(--hu) * 0.95)); line-height: 1.1; text-align: center; }
+.me-egg__chance { font-size: max(11px, calc(var(--hu) * 1.25)); color: #ffffff; font-weight: 700; }
 .me-egg__buttons { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--hu) * 0.65); }
 .me-egg__button {
+  position: relative;
   border: var(--gs-border) solid var(--gs-ink);
   border-radius: calc(var(--hu) * 1);
-  padding: calc(var(--hu) * 0.5) calc(var(--hu) * 0.35);
+  padding: calc(var(--hu) * 0.55) calc(var(--hu) * 0.35) calc(var(--hu) * 0.5);
   color: #fff;
   font-family: var(--gs-font);
   font-weight: 700;
-  font-size: max(10px, calc(var(--hu) * 1.1));
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.15;
+  gap: 2px;
+  line-height: 1.1;
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
   min-height: 44px;
-  justify-content: center;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  transition: transform 100ms ease, filter 100ms ease;
 }
-.me-egg__button b { font-size: max(14px, calc(var(--hu) * 1.65)); }
+.me-egg__button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.me-egg__button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+.me-egg__button b { font-size: max(13px, calc(var(--hu) * 1.5)); }
+.me-egg__button small { display: inline-flex; align-items: center; gap: 4px; font-size: max(10px, calc(var(--hu) * 1.05)); }
+.me-egg__button small .aoe-icon { height: 1.2em; width: auto; }
+.me-egg__button kbd {
+  position: absolute; left: 6px; top: 6px;
+  min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
+  border: 2px solid var(--gs-ink); border-radius: 5px; background: #fff; color: var(--gs-ink);
+  font-family: var(--gs-font); font-size: 10px; line-height: 12px; text-align: center; text-shadow: none;
+}
+body.aoe-touch-mode .me-egg__button kbd { display: none; }
 .me-egg__button--hatch { background: linear-gradient(180deg, #ffe066, #ffa62b); }
-.me-egg__button--multi { background: linear-gradient(180deg, #ff9a5a, #e2721a); }
+.me-egg__button--multi { background: linear-gradient(180deg, #ff8fd0, #d8347f); }
 .me-egg__button:disabled { filter: saturate(0.3) brightness(0.7); cursor: not-allowed; }
+.me-egg__hint { margin-top: calc(var(--hu) * 0.5); text-align: center; font-size: max(10px, calc(var(--hu) * 1)); color: #b9ffb0; }
+.me-egg__hint--warn { color: #ffb3b3; }
 
 /* ---- The hatch toast ---------------------------------------------------- */
 .me-toast {
   position: fixed;
   left: 50%;
-  top: 22%;
+  top: 18%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -572,17 +730,30 @@ body.aoe-touch-mode .aoe-account__name { max-width: 30vw; }
   max-width: 90vw;
 }
 .me-toast__card {
-  padding: calc(var(--hu) * 0.8) calc(var(--hu) * 1.8);
+  --rarity: #8fd66a;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--hu) * 0.9);
+  padding: calc(var(--hu) * 0.7) calc(var(--hu) * 1.4) calc(var(--hu) * 0.7) calc(var(--hu) * 0.7);
   border: var(--gs-border) solid var(--gs-ink);
   border-radius: calc(var(--hu) * 1.3);
   background: linear-gradient(180deg, #ffffff, #e6e6e6);
   color: var(--gs-ink);
   font-family: var(--gs-font);
-  font-size: max(13px, calc(var(--hu) * 1.9));
-  text-align: center;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
-  animation: me-toast 2.6s ease forwards;
+  box-shadow: 0 0 0 3px var(--rarity), 0 6px 0 rgba(0, 0, 0, 0.25);
+  animation: me-toast 3.6s ease forwards;
 }
+.me-toast__portrait {
+  width: max(52px, calc(var(--hu) * 6)); height: max(52px, calc(var(--hu) * 6));
+  border-radius: calc(var(--hu) * 0.9); border: 2px solid var(--gs-ink);
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, var(--rarity) 75%);
+  overflow: hidden; flex: none;
+}
+.me-toast__portrait img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.me-toast__text { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.me-toast__text small { font-size: max(10px, calc(var(--hu) * 1.05)); color: #5a6478; }
+.me-toast__text b { font-size: max(16px, calc(var(--hu) * 2)); }
+.me-toast__rarity { font-size: max(10px, calc(var(--hu) * 1.1)); color: color-mix(in srgb, var(--rarity) 70%, #000); }
 @keyframes me-toast {
   0% { opacity: 0; transform: scale(0.6); }
   12% { opacity: 1; transform: scale(1.08); }

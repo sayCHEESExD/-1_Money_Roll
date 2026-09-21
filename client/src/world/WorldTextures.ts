@@ -206,6 +206,54 @@ export class WorldTextures {
     });
   }
 
+  /**
+   * LIT WINDOWS: a building's walls. Two floors of two windows to a tile on
+   * the wall colour, each a glass pane in a dark frame; a seeded few glow
+   * warm, so a city looks lived in without a single light source.
+   */
+  windows(base: string, frame: string): Texture {
+    return this.cached(`windows:${base}:${frame}`, () => {
+      const size = 128;
+      const ctx = context(size);
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, size, size);
+      const random = seeded(0x5150);
+      const cols = 2;
+      const rows = 2;
+      const pw = size / cols;
+      const ph = size / rows;
+      for (let ix = 0; ix < cols; ix += 1) {
+        for (let iy = 0; iy < rows; iy += 1) {
+          const x = ix * pw + pw * 0.22;
+          const y = iy * ph + ph * 0.18;
+          const w = pw * 0.56;
+          const h = ph * 0.6;
+          ctx.fillStyle = frame;
+          roundRect(ctx, x - 4, y - 4, w + 8, h + 8, 4);
+          ctx.fill();
+          const lit = random() < 0.45;
+          ctx.fillStyle = lit ? '#ffe9a6' : '#8fd3ff';
+          roundRect(ctx, x, y, w, h, 3);
+          ctx.fill();
+          ctx.fillStyle = lit ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.45)';
+          roundRect(ctx, x + 3, y + 3, w * 0.4, h * 0.35, 2);
+          ctx.fill();
+          ctx.fillStyle = frame;
+          ctx.fillRect(x + w / 2 - 1.5, y, 3, h);
+          ctx.fillRect(x, y + h / 2 - 1.5, w, 3);
+        }
+      }
+      // The block seam along the top and left, like every other block face.
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.fillRect(0, 0, size, 5);
+      ctx.fillRect(0, 0, 5, size);
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.fillRect(0, size - 5, size, 5);
+      ctx.fillRect(size - 5, 0, 5, size);
+      return ctx.canvas;
+    });
+  }
+
   dispose(): void {
     for (const texture of this.cache.values()) texture.dispose();
     this.cache.clear();

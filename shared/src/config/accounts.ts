@@ -45,4 +45,4 @@ export const isValidAccountId = (id: unknown): id is string =>
  * `BLOXITY_GAME_ID` Legion injects and falls back to this; the client bakes
  * `VITE_BLOXITY_GAME_ID` in and falls back to the same.
  */
-export const DEFAULT_BLOXITY_GAME_SLUG = 'money-escape';
+export const DEFAULT_BLOXITY_GAME_SLUG = 'money-roll';

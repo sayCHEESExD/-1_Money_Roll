@@ -41,7 +41,7 @@ import { ACCOUNT_KEY_PREFIX, ROOM_NAME, accountKeyFor } from '../shared/dist/ind
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVER_ENTRY = path.join(ROOT, 'server', 'dist', 'index.js');
 const STUB = pathToFileURL(path.join(ROOT, 'scripts', 'persistence', 'stub-bloxity.mjs')).href;
-const GAME_SLUG = 'money-escape';
+const GAME_SLUG = 'money-roll';
 const PORT = 2595;
 const MONGO_PORT = 27117;
 const WINDOWS = platform() === 'win32';

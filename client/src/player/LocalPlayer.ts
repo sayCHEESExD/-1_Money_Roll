@@ -23,6 +23,9 @@ import type { InputState } from '../input/InputState.js';
 import { NamePlate } from './NamePlate.js';
 import { PlayerCharacter } from './PlayerCharacter.js';
 
+/** The pace the run cycle plays at while a player trains on a pad, in world units per second. */
+const TRAINING_RUN_SPEED = 14;
+
 const MAX_PENDING_INPUTS = 240;
 const FIXED_DT = 1 / 60;
 const MAX_STEPS_PER_FRAME = 5;
@@ -495,8 +498,12 @@ export class LocalPlayer {
   }
 
   private updateAnimation(delta: number, dying: boolean): void {
+    // TRAINING: standing in a zone the player is allowed into, they train -
+    // the run plays at pace for as long as they are on the pad and stops the
+    // frame they step off. Animation only: the simulation is not moved.
+    const training = !dying && this.motion.trainingZone > 0 && this.motion.grounded;
     this.animationInput.grounded = this.motion.grounded;
-    this.animationInput.horizontalSpeed = this.horizontalSpeed;
+    this.animationInput.horizontalSpeed = training ? Math.max(this.horizontalSpeed, TRAINING_RUN_SPEED) : this.horizontalSpeed;
     this.animationInput.moveMultiplier = this.params.moveMultiplier;
     this.animationInput.verticalVelocity = this.motion.vy;
     this.animationInput.turn = dying ? 0 : this.turnSignal;
