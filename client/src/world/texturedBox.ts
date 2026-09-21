@@ -1,6 +1,17 @@
 import { BoxGeometry } from 'three';
 
 /**
+ * THE STUD PITCH OF THE WORLD, as world units per texture repeat.
+ *
+ * The spawn floor is the reference: six units to a tile of four studs, so a
+ * stud is a unit and a half. Every builder - floors, walls, islands, trees,
+ * rocks, stands, boards, the cities - tiles its stud textures at this figure
+ * through `texturedBox`, which is what keeps the squares the same size on a
+ * hill and on a lamp post.
+ */
+export const STUD_TILE = 6;
+
+/**
  * A box whose UVs are scaled to WORLD size, so one texture tiles across every
  * solid in the course at the same physical scale.
  *

@@ -59,6 +59,7 @@ const SAMPLE_URLS: Partial<Record<SoundName, string>> = {
   jump: '/audio/jump.mp3',
   death: '/audio/fall.mp3',
   step: '/audio/robot%20steps.mp3',
+  money: '/audio/money.mp3',
 };
 
 /**
@@ -88,7 +89,15 @@ const COOLDOWNS: Readonly<Record<SoundName, number>> = {
   claim: 0.3,
   unlock: 0.3,
   buy: 0.3,
+  money: 0.3,
 };
+
+/**
+ * The rolling loop's own bus. The supplied money recording is a soft rustle
+ * of notes; it sits under the footsteps and well under the music, so it reads
+ * as the ball going along rather than as an alarm that it is.
+ */
+const ROLL_GAIN = 0.55;
 
 export type SoundName =
   /** The leap: the frame the mech pushes off the deck. */
@@ -105,7 +114,9 @@ export type SoundName =
   /** A permanent unlock: an upgrade tile, a trail or an aura. */
   | 'unlock'
   /** A charm bought. */
-  | 'buy';
+  | 'buy'
+  /** The money ball rolling: the supplied recording, looped while it is pushed. */
+  | 'money';
 
 /**
  * Every sound in the game, synthesised.
@@ -204,6 +215,10 @@ export class AudioManager {
    */
   private footsteps: AudioBufferSourceNode | null = null;
   private footstepGain: GainNode | null = null;
+  /** The rolling loop: one source, ever, while the ball is pushed. */
+  private rolling: AudioBufferSourceNode | null = null;
+  private rollingGain: GainNode | null = null;
+  private rollBus: GainNode | null = null;
 
   private muted = false;
   private started = false;
@@ -279,6 +294,9 @@ export class AudioManager {
       this.walkBus = this.context.createGain();
       this.walkBus.gain.value = WALK_GAIN;
       this.walkBus.connect(this.master);
+      this.rollBus = this.context.createGain();
+      this.rollBus.gain.value = ROLL_GAIN;
+      this.rollBus.connect(this.master);
     }
 
     void this.context.resume().catch(() => undefined);
@@ -306,7 +324,10 @@ export class AudioManager {
     this.muted = muted;
     // The loop is the one voice that would otherwise keep running: master gain
     // silences it, but a muted game should not be holding a source open.
-    if (muted) this.stopFootsteps();
+    if (muted) {
+      this.stopFootsteps();
+      this.stopRolling();
+    }
     this.applyMaster();
   }
 
@@ -434,6 +455,73 @@ export class AudioManager {
     return true;
   }
 
+  /**
+   * THE MONEY BALL ROLLING. The supplied `money.mp3`, looped on its own bus
+   * while the player pushes the ball, and faded out the moment they stop or
+   * the ball is gone. One source only: a second call while it plays only
+   * retunes the one that is, so two copies can never overlap.
+   *
+   * @param active true while a ball is being pushed along the ground
+   * @param level  0..1 how fast, which sets the loop's rate and level
+   * @returns false when the recording is not loaded (nothing is played)
+   */
+  setRolling(active: boolean, level: number): boolean {
+    const ctx = this.context;
+    const bus = this.rollBus;
+    const buffer = this.samples.get('money');
+    if (!ctx || !bus || !buffer) {
+      this.stopRolling();
+      return false;
+    }
+    if (!active || this.muted || ctx.state !== 'running') {
+      this.stopRolling();
+      return true;
+    }
+    if (!this.rolling || !this.rollingGain) {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const envelope = ctx.createGain();
+      envelope.gain.value = 0;
+      source.connect(envelope);
+      envelope.connect(bus);
+      source.start();
+      this.rolling = source;
+      this.rollingGain = envelope;
+    }
+    const pace = clamp01(level);
+    const now = ctx.currentTime;
+    this.rolling.playbackRate.setTargetAtTime(0.85 + pace * 0.3, now, 0.08);
+    this.rollingGain.gain.setTargetAtTime(0.6 + pace * 0.4, now, 0.06);
+    return true;
+  }
+
+  private stopRolling(): void {
+    const source = this.rolling;
+    const envelope = this.rollingGain;
+    this.rolling = null;
+    this.rollingGain = null;
+    if (!source) return;
+    const ctx = this.context;
+    if (envelope && ctx) {
+      const now = ctx.currentTime;
+      envelope.gain.cancelScheduledValues(now);
+      envelope.gain.setValueAtTime(envelope.gain.value, now);
+      envelope.gain.linearRampToValueAtTime(0, now + 0.08);
+      try {
+        source.stop(now + 0.1);
+      } catch {
+        // Already stopped; nothing to do.
+      }
+      return;
+    }
+    try {
+      source.stop();
+    } catch {
+      // Already stopped.
+    }
+  }
+
   /** Stop the walking loop, fading out so it does not click. */
   private stopFootsteps(): void {
     const source = this.footsteps;
@@ -515,6 +603,11 @@ export class AudioManager {
       case 'claim':
         this.arpeggio(now, [0, 5, 9], 0.06, 'square', 0.35);
         break;
+      case 'money':
+        // A one-shot of the rustle; the loop is `setRolling`.
+        if (this.playSample('money', now, 0.4)) break;
+        this.arpeggio(now, [0, 3], 0.05, 'triangle', 0.2);
+        break;
       case 'unlock':
         this.arpeggio(now, [0, 4, 7, 12, 16], 0.06, 'triangle', 0.4);
         break;
@@ -544,8 +637,10 @@ export class AudioManager {
     this.master = null;
     this.musicBus = null;
     this.stopFootsteps();
+    this.stopRolling();
     this.sfxBus = null;
     this.walkBus = null;
+    this.rollBus = null;
     this.limiter = null;
   }
 

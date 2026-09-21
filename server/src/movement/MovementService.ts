@@ -78,6 +78,9 @@ export class MovementService {
     // The restored bills are the wallet the ball shows; no crossing is under way.
     sim.bridge.wallet = Number.isFinite(player.cash) ? Math.max(0, player.cash) : 0;
     sim.bridge.cash = 0;
+    // No ball on arrival: the meadow makes one.
+    sim.bridge.active = false;
+    player.ballActive = false;
     this.sims.set(player.sessionId, sim);
     this.publish(player, sim);
   }
@@ -141,14 +144,31 @@ export class MovementService {
     if (!sim) return;
     player.cash = Number.isFinite(amount) ? Math.max(0, Math.min(MAX_CASH, amount)) : 0;
     sim.bridge.cash = 0;
+    sim.bridge.active = false;
+    player.ballActive = false;
     this.publish(player, sim);
   }
 
-  /** Drop the crossing supply: a death on the lava loses the run, never the wallet. */
+  /** Drop the crossing supply and the ball: a death loses the run, never the wallet. */
   dropSupply(sessionId: string, player: PlayerState): void {
     const sim = this.sims.get(sessionId);
     if (!sim) return;
     sim.bridge.cash = 0;
+    sim.bridge.active = false;
+    player.ballActive = false;
+    this.publish(player, sim);
+  }
+
+  /**
+   * MAKE THE BALL. Called by the cash service the moment a player collects
+   * in the meadow, and by nothing else: the ball is how a run begins, and the
+   * meadow is where it begins.
+   */
+  activateBall(sessionId: string, player: PlayerState): void {
+    const sim = this.sims.get(sessionId);
+    if (!sim || sim.bridge.active) return;
+    sim.bridge.active = true;
+    player.ballActive = true;
     this.publish(player, sim);
   }
 
@@ -165,9 +185,11 @@ export class MovementService {
     const sim = this.sims.get(sessionId);
     if (!sim) return;
     resetMotion(sim.motion, x, y, z, yaw);
-    // A placement ends any crossing: the bridge and its supply go, the wallet stays.
+    // A placement ends the run: the bridge, its supply and the ball go, the wallet stays.
     sim.bridge.cells.clear();
     sim.bridge.cash = 0;
+    sim.bridge.active = false;
+    player.ballActive = false;
     this.publish(player, sim);
   }
 
@@ -213,8 +235,10 @@ export class MovementService {
     this.lastFromZ = sim.motion.z;
     this.lastWasGrounded = sim.motion.grounded;
 
-    // The wallet a crossing may draw on is the replicated, service-owned figure.
+    // The wallet a crossing may draw on is the replicated, service-owned figure,
+    // and whether there is a ball to carry it is the service's say too.
     sim.bridge.wallet = Number.isFinite(player.cash) ? Math.max(0, player.cash) : 0;
+    sim.bridge.active = player.ballActive;
     stepPlayer(
       sim.motion,
       sanitiseInput(message),

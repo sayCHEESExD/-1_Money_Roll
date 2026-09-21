@@ -104,8 +104,8 @@ export class PlayerCharacter {
    * @param cash   the cash to draw as the ball, predicted or replicated
    * @param vx, vz the player's velocity, for the roll
    */
-  update(delta: number, input: AnimationInput, cash: number, vx: number, vz: number): void {
-    this.ball.update(delta, cash, this.root.rotation.y, vx, vz);
+  update(delta: number, input: AnimationInput, cash: number, vx: number, vz: number, fraction = 1): void {
+    this.ball.update(delta, cash, this.root.rotation.y, vx, vz, fraction);
     input.push = this.ball.pushWeight;
     this.animator.update(Math.max(0, delta), input);
     this.aura.update(delta, this.root.rotation.y);

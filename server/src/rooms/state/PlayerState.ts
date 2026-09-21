@@ -70,6 +70,8 @@ export class PlayerState extends Schema {
   @type('float64') cash = 0;
   /** The temporary lava-crossing supply: what the ball holds mid-crossing. Never persisted. */
   @type('float64') crossingCash = 0;
+  /** Whether the money ball exists: made in the meadow, lost on death or respawn. Never persisted. */
+  @type('boolean') ballActive = false;
   /** Cash earned since the last rebirth. Drives level. */
   @type('float64') levelCash = 0;
   /** Cash earned over the whole profile. The Cash board. */

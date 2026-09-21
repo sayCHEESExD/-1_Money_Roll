@@ -20,7 +20,7 @@ import {
 } from 'three';
 import { PALETTE, css, shade } from '../config/worldVisuals.js';
 import { CanvasSign } from './CanvasSign.js';
-import { texturedBox } from './texturedBox.js';
+import { STUD_TILE, texturedBox } from './texturedBox.js';
 import { worldTextures } from './WorldTextures.js';
 
 /** One pad's dressing: what changes with the player's inventory. */
@@ -64,7 +64,7 @@ export class BillStands {
     this.locked = this.lambert(PALETTE.padLocked, 0.05);
 
     const size = BILL_ROW.padSize;
-    const faceGeometry = new BoxGeometry(size - 1.2, 0.14, size - 1.2);
+    const faceGeometry = texturedBox(size - 1.2, 0.14, size - 1.2, STUD_TILE);
     const beamGeometry = new CylinderGeometry(1.2, 1.8, 7, 12, 1, true);
     const noteGeometry = new BoxGeometry(3.2, 1.8, 0.14);
     this.geometries.push(faceGeometry, beamGeometry, noteGeometry);
@@ -125,7 +125,7 @@ export class BillStands {
     // The area's board, behind the back row on two posts, as the reference has it.
     const boardX = BILL_ROW.deckMaxX + 2;
     const boardZ = (BILL_ROW.firstZ + BILL_ROW.firstZ + BILL_ROW.spacingZ * (BILL_ROW.perRow - 1)) / 2;
-    const post = texturedBox(1.2, 22, 1.2, 4);
+    const post = texturedBox(1.2, 22, 1.2, STUD_TILE);
     this.geometries.push(post);
     const postMaterial = this.lambert(0x2b3554, 0);
     for (const dz of [-14, 14]) {
@@ -141,7 +141,7 @@ export class BillStands {
     board.mesh.rotation.y = -Math.PI / 2;
     this.root.add(board.mesh);
     this.signs.push(board);
-    const backing = new Mesh(texturedBox(1.4, 12, 36, 4), this.lambert(0xf0c95a, 0.1));
+    const backing = new Mesh(texturedBox(1.4, 12, 36, STUD_TILE), this.lambert(0xf0c95a, 0.1));
     backing.position.set(boardX + 0.4, BILL_ROW.deckY + 19, boardZ);
     this.root.add(backing);
 
@@ -186,7 +186,7 @@ export class BillStands {
 
   /** A studded block in the given colour: the world's one material language. */
   private lambert(color: number, emissive: number): MeshLambertMaterial {
-    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68), 2) });
+    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68)) });
     if (emissive > 0) {
       material.emissive.setHex(color);
       material.emissiveIntensity = emissive;

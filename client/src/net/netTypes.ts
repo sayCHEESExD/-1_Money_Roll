@@ -25,6 +25,8 @@ export interface NetPlayerState extends PlayerMotionState {
   cash: number;
   /** The temporary lava-crossing supply. The ball shows it while `crossing` is set. */
   crossingCash: number;
+  /** Whether the money ball exists: made in the meadow, lost on death or respawn. */
+  ballActive: boolean;
   levelCash: number;
   lifetimeCash: number;
   billSlot: number;

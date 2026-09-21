@@ -72,6 +72,13 @@ export interface BridgeState {
    * on the lava costs the run and nothing else.
    */
   cash: number;
+  /**
+   * Whether the money ball has been MADE: the player walked the meadow and
+   * collected since they last spawned. Set by the server's cash service, never
+   * by the simulation. A crossing draws on the wallet only through an active
+   * ball, so the meadow is the start of every run.
+   */
+  active: boolean;
   /** Cell ids this player has built. Their floor over the lava. */
   cells: Set<number>;
 }
@@ -146,7 +153,7 @@ export const createMotion = (): PlayerMotion => ({
   crossing: 0,
 });
 
-export const createBridgeState = (): BridgeState => ({ wallet: 0, cash: 0, cells: new Set() });
+export const createBridgeState = (): BridgeState => ({ wallet: 0, cash: 0, active: false, cells: new Set() });
 
 export const createSimEvents = (): SimEvents => ({
   jumpStarted: false,
@@ -379,7 +386,8 @@ const buildUnder = (motion: PlayerMotion, params: SimParams, dt: number, events:
   const bridge = params.bridge;
   if (motion.crossing === 0) {
     motion.crossing = cellStage(id);
-    bridge.cash = bridge.wallet;
+    // No ball, no supply: a player who skipped the meadow starves at the edge.
+    bridge.cash = bridge.active ? bridge.wallet : 0;
   }
   if (!bridge.cells.has(id)) {
     const price = cellCost(cellStage(id));

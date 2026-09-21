@@ -16,7 +16,7 @@ import { PALETTE, css, shade } from '../config/worldVisuals.js';
 import { logger } from '../util/logger.js';
 import { CanvasSign } from './CanvasSign.js';
 import { worldTextures } from './WorldTextures.js';
-import { texturedBox } from './texturedBox.js';
+import { STUD_TILE, texturedBox } from './texturedBox.js';
 import { drawPortrait, portraitFor } from '../bloxity/Portraits.js';
 import { maxTextureEdge } from '../config/device.js';
 
@@ -63,8 +63,8 @@ export class Scoreboard {
 
   constructor() {
     // The frames are studded blocks like every other structure in the hub.
-    const frame = this.material(new MeshLambertMaterial({ map: worldTextures.studs(css(PALETTE.boardFrame), shade(PALETTE.boardFrame, 0.68), 2) }));
-    const frameDark = this.material(new MeshLambertMaterial({ map: worldTextures.studs(css(PALETTE.boardFrameDark), shade(PALETTE.boardFrameDark, 0.68), 2) }));
+    const frame = this.material(new MeshLambertMaterial({ map: worldTextures.studs(css(PALETTE.boardFrame), shade(PALETTE.boardFrame, 0.68)) }));
+    const frameDark = this.material(new MeshLambertMaterial({ map: worldTextures.studs(css(PALETTE.boardFrameDark), shade(PALETTE.boardFrameDark, 0.68)) }));
 
     SPECS.forEach((spec, index) => {
       const group = new Group();
@@ -125,7 +125,7 @@ export class Scoreboard {
   }
 
   private box(material: MeshLambertMaterial, x: number, y: number, z: number, w: number, h: number, d: number): Mesh {
-    const geometry = texturedBox(w, h, d, 4);
+    const geometry = texturedBox(w, h, d, STUD_TILE);
     this.geometries.push(geometry);
     const mesh = new Mesh(geometry, material);
     mesh.position.set(x, y, z);

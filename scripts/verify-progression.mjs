@@ -292,24 +292,46 @@ console.log('  the bills survive a death; only a rebirth resets them');
   const bank = S.STAGES[1];
   place(0, 0, bank.lavaStartZ - 4);
   movement.setCash('s1', player, 1000);
+  check(player.ballActive === false, 'a player arrives with no money ball');
+  // Without the meadow there is no ball, and the lava starves them at once.
+  const noBall = walkServer(bank.lavaStartZ + 8, 2);
+  check(noBall.starved && player.crossingCash === 0 && player.cash === 1000, 'the lava refuses a player who has not been through the meadow, and keeps their bills');
+  place(0, 0, bank.lavaStartZ - 4);
+  // The meadow makes the ball: a credited stride there is what activates it.
+  place(0, 0, -80);
+  cash.credit('s1', player, 0.05, 0, true, movement);
+  cash.credit('s1', player, 0.05, 0.8, true, movement);
+  check(player.ballActive === true, 'collecting in the meadow makes the ball');
+  movement.setCash('s1', player, 1000);
+  movement.activateBall('s1', player);
+  place(0, 0, bank.lavaStartZ - 4);
+  movement.activateBall('s1', player);
   const walked = walkServer(bank.lavaStartZ + 20, 6);
   check(player.crossing === 2 && player.crossingCash < 1000 && player.cash === 1000, `on the lava the supply is spent (${player.crossingCash.toFixed(0)} left) while the bills read ${player.cash}`);
   check(walked.starved, 'with 1,000 bills against a 2,500 crossing the player starves');
   check(movement.collision.hasFallen(player.x, player.y, player.z) || player.y < S.COURSE.lavaDeathY, 'and is pulled into the lava');
   // What the room does on a death: drop the supply. Then what a placement does.
   movement.dropSupply('s1', player);
-  check(player.crossingCash === 0 && player.cash === 1000, 'death drops the supply and leaves the bills at 1,000');
+  check(player.crossingCash === 0 && player.cash === 1000 && player.ballActive === false, 'death drops the supply and the ball and leaves the bills at 1,000');
   movement.teleport('s1', player, S.SPAWN_POSITION.x, S.SPAWN_POSITION.y, S.SPAWN_POSITION.z, 0);
   cash.reset('s1');
   check(player.cash === 1000 && player.bridge === '', 'the respawn keeps the bills and drops the bridge');
   const saved = snapshotOf(player);
   check(saved.cash === 1000 && !('crossingCash' in saved), 'the profile stores the permanent bills and never the crossing supply');
-  // Another crossing has the FULL figure again.
+  // Back through the meadow, another crossing has the FULL figure again.
+  place(0, 0, -80);
+  cash.credit('s1', player, 0.05, 0, true, movement);
+  cash.credit('s1', player, 0.05, 0.8, true, movement);
+  const earned = player.cash;
+  check(player.ballActive && earned > 1000, `the meadow makes the ball again (bills ${earned.toFixed(1)})`);
+  movement.setCash('s1', player, 1000);
+  movement.activateBall('s1', player);
   place(0, 0, S.COURSE_START_Z - 4);
+  movement.activateBall('s1', player);
   walkServer(S.COURSE_START_Z + 14, 3);
   check(player.crossing === 1 && near(player.crossingCash, 1000 - player.bridge.split(',').length * S.cellCost(1)) && player.cash === 1000, `the next crossing draws on the full 1,000 again (supply ${player.crossingCash.toFixed(0)}, bills ${player.cash})`);
   place(0, 0, S.SPAWN_POSITION.z);
-  check(player.crossingCash === 0 && player.cash === 1000, 'a placement clears only the supply');
+  check(player.crossingCash === 0 && player.cash === 1000 && !player.ballActive, 'a placement clears the supply and the ball, never the bills');
 }
 
 console.log('  rebirth');

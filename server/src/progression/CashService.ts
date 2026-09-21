@@ -108,6 +108,8 @@ export class CashService {
         distance <= this.maxCreditedStep(player, step)
       ) {
         gained += distance * meadowCashPerUnit(player.billSlot, boost);
+        // Collecting in the meadow is what MAKES the money ball.
+        movement.activateBall(sessionId, player);
       }
       // A TRAINING ZONE: paid by time. `trainingCashPerSecond` is 0 for a
       // zone the player's rebirth count does not unlock, whatever they stand on.

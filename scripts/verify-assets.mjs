@@ -35,13 +35,14 @@ const EXPECTED = [
   { path: 'assets/ui/shoe.png', md5: 'c5305c2301b18df2d2b4f5f57ccf5fb7' },
   { path: 'assets/ui/aura.png', md5: 'f30df632e885addc0eeae9ca2753fe9c' },
   { path: 'assets/ui/shop.png', md5: 'baf5b63cba7737b79dd63478a11768fa' },
-  // The four sounds. The track is the single largest file in the build. The
+  // The five sounds. The track is the single largest file in the build. The
   // footstep loop's name carries a space as supplied; it is referenced as
   // `robot%20steps.mp3` and never renamed.
   { path: 'assets/audio/background.mp3', md5: 'ff13ed4af40fe632cdc257a4765524dd' },
   { path: 'assets/audio/fall.mp3', md5: 'a6c361490b027a8effd0ac861936a5a7' },
   { path: 'assets/audio/jump.mp3', md5: '77c58db6921be7b0c7a61903d38bbf30' },
   { path: 'assets/audio/robot steps.mp3', md5: '4023a023528e516573e1663921432c93' },
+  { path: 'assets/audio/money.mp3', md5: '029f7e89646ef250b25c95d5c2b10fcd' },
 ];
 
 let failures = 0;

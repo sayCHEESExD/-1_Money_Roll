@@ -39,8 +39,11 @@ export const ballRadiusFor = (cash: number): number => {
  *
  * A sphere skinned in the equipped bill's notes, sat on the ground directly
  * ahead of the player and ROLLED by the distance they cover, so it reads as
- * pushed along rather than carried. It grows as cash is earned and shrinks
- * as the bridge is bought out of it. Hidden when there is nothing to push.
+ * pushed along rather than carried. It grows as cash is earned, and while a
+ * crossing eats it the radius follows the FRACTION left - the square root of
+ * it, so the ball's face shrinks in step with the supply and is plainly
+ * gone at zero - rather than the logarithmic cash curve, which would barely
+ * move. Hidden when there is nothing to push.
  *
  * Parented to the CHARACTER ROOT, so it follows for free and sits ahead of
  * whichever way the player faces; its own rotation is accumulated in world
@@ -97,8 +100,9 @@ export class MoneyBall {
    * @param yaw       the player's facing, so the ball sits ahead of them
    * @param vx, vz    the player's velocity, so the ball rolls the right way
    */
-  update(delta: number, cash: number, yaw: number, vx: number, vz: number): void {
-    this.targetRadius = ballRadiusFor(cash);
+  update(delta: number, cash: number, yaw: number, vx: number, vz: number, fraction = 1): void {
+    const left = Number.isFinite(fraction) ? Math.max(0, Math.min(1, fraction)) : 1;
+    this.targetRadius = left <= 0 ? 0 : ballRadiusFor(cash) * Math.sqrt(left);
     const alpha = 1 - Math.exp(-BALL.growRate * Math.max(0, delta));
     this.radius += (this.targetRadius - this.radius) * alpha;
     if (this.targetRadius === 0 && this.radius < 0.05) this.radius = 0;

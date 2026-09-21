@@ -71,6 +71,7 @@ export interface AuthoritativeMotion {
   crossing: number;
   cash: number;
   crossingCash: number;
+  ballActive: boolean;
   bridge: string;
 }
 
@@ -180,7 +181,29 @@ export class LocalPlayer {
    * on a bank.
    */
   get ballCash(): number {
+    if (!this.params.bridge.active) return 0;
     return this.motion.crossing > 0 ? this.params.bridge.cash : this.params.bridge.wallet;
+  }
+
+  /** Whether there is a ball at all: made in the meadow, gone on death. */
+  get ballActive(): boolean {
+    return this.params.bridge.active;
+  }
+
+  /**
+   * How much of the ball is left, 0..1: the supply over the wallet while a
+   * crossing is under way, whole on a bank. What the ball's SIZE follows.
+   */
+  get ballFraction(): number {
+    if (this.motion.crossing === 0) return 1;
+    const wallet = this.params.bridge.wallet;
+    if (wallet <= 0) return 0;
+    return Math.max(0, Math.min(1, this.params.bridge.cash / wallet));
+  }
+
+  /** The ball's current drawn radius, for the rolling sound. */
+  get ballRadius(): number {
+    return this.character.ball.currentRadius;
   }
 
   /** The predicted bridge, for drawing. */
@@ -240,6 +263,7 @@ export class LocalPlayer {
     resetMotion(this.motion, x, y, z, rotationY);
     this.params.bridge.cells.clear();
     this.params.bridge.cash = 0;
+    this.params.bridge.active = false;
     this.previous.x = x;
     this.previous.y = y;
     this.previous.z = z;
@@ -272,8 +296,9 @@ export class LocalPlayer {
     this.motion.vx = 0;
     this.motion.vy = 0;
     this.motion.vz = 0;
-    // The crossing supply goes into the lava with the player; the wallet stays.
+    // The crossing supply and the ball go into the lava with the player; the wallet stays.
     this.params.bridge.cash = 0;
+    this.params.bridge.active = false;
     this.params.bridge.cells.clear();
   }
 
@@ -318,6 +343,7 @@ export class LocalPlayer {
     // THE MONEY, from the server, before the replay spends the supply again.
     this.params.bridge.wallet = state.cash;
     this.params.bridge.cash = state.crossingCash;
+    this.params.bridge.active = state.ballActive;
     decodeBridge(state.bridge, this.params.bridge.cells);
     this.lastServerCash = state.cash;
 
@@ -510,7 +536,7 @@ export class LocalPlayer {
     this.animationInput.jumpStarted = !dying && this.events.jumpStarted;
     this.animationInput.landed = !dying && this.events.landed;
     this.animationInput.dying = dying;
-    this.character.update(delta, this.animationInput, dying ? 0 : this.ballCash, this.motion.vx, this.motion.vz);
+    this.character.update(delta, this.animationInput, dying ? 0 : this.ballCash, this.motion.vx, this.motion.vz, this.ballFraction);
   }
 
   private syncCharacter(): void {

@@ -12,7 +12,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { css, shade } from '../config/worldVisuals.js';
 import { CanvasSign } from './CanvasSign.js';
-import { texturedBox } from './texturedBox.js';
+import { STUD_TILE, texturedBox } from './texturedBox.js';
 import { worldTextures } from './WorldTextures.js';
 
 /** One zone's dressing: what changes with the player's rebirth count. */
@@ -123,7 +123,7 @@ export class TrainingZones {
   constructor() {
     const size = TRAINING.size;
     const lockGeometry = new BoxGeometry(size + 0.4, 8, size + 0.4);
-    const rimGeometry = new BoxGeometry(size + 1.2, 0.5, size + 1.2);
+    const rimGeometry = texturedBox(size + 1.2, 0.5, size + 1.2, STUD_TILE);
     this.geometries.push(lockGeometry, rimGeometry);
 
     for (const zone of TRAINING_ZONES) {
@@ -177,7 +177,7 @@ export class TrainingZones {
     // zone's sign is ever drawn across it from the meadow.
     const boardX = TRAINING.x - 14;
     const boardZ = trainingZoneZ(2);
-    const post = texturedBox(1.2, 24, 1.2, 4);
+    const post = texturedBox(1.2, 24, 1.2, STUD_TILE);
     this.geometries.push(post);
     const postMaterial = this.lambert(INK, 0);
     for (const dz of [-14, 14]) {
@@ -193,7 +193,7 @@ export class TrainingZones {
     board.mesh.rotation.y = Math.PI / 2;
     this.root.add(board.mesh);
     this.signs.push(board);
-    const backing = new Mesh(texturedBox(1.4, 12, 36, 4), this.lambert(0x5ee0ff, 0.1));
+    const backing = new Mesh(texturedBox(1.4, 12, 36, STUD_TILE), this.lambert(0x5ee0ff, 0.1));
     backing.position.set(boardX - 0.4, 23, boardZ);
     this.root.add(backing);
 
@@ -247,7 +247,8 @@ export class TrainingZones {
       }
       list.push(g);
     };
-    const box = (w: number, h: number, d: number): BufferGeometry => new BoxGeometry(w, h, d);
+    // World-scaled UVs: a building's studs are the floor's studs.
+    const box = (w: number, h: number, d: number): BufferGeometry => texturedBox(w, h, d, STUD_TILE);
     let rnd = seed * 7919 + 17;
     const random = (): number => {
       rnd = (rnd * 1664525 + 1013904223) >>> 0;
@@ -288,7 +289,7 @@ export class TrainingZones {
         const bx = sx * (10 - bw / 2 - 0.2);
         const bz = sz * (10 - bd / 2 - 0.2);
         const wall = this.facade(pick(style.buildings));
-        put(wall, texturedBox(bw, rise, bd, 2), bx, rise / 2 + 0.06, bz);
+        put(wall, texturedBox(bw, rise, bd, STUD_TILE / 2), bx, rise / 2 + 0.06, bz);
         const roofColour = pick(style.roofs);
         put(this.lambert(roofColour, 0), box(bw + 0.4, 0.3, bd + 0.4), bx, rise + 0.2, bz);
         if (style.towers) {
@@ -310,7 +311,7 @@ export class TrainingZones {
         const sxPos = sx * 4.4;
         const szPos = sz * (10 - sd / 2 - 0.2);
         const shopWall = this.facade(pick(style.buildings));
-        put(shopWall, texturedBox(sw, sh, sd, 2), sxPos, sh / 2 + 0.06, szPos);
+        put(shopWall, texturedBox(sw, sh, sd, STUD_TILE / 2), sxPos, sh / 2 + 0.06, szPos);
         put(this.lambert(pick(style.roofs), 0), box(sw + 0.3, 0.24, sd + 0.3), sxPos, sh + 0.18, szPos);
         // The door and the awning face the road along Z (toward the crossroads).
         const face = -sz;
@@ -374,7 +375,7 @@ export class TrainingZones {
 
   /** A studded block in the given colour: the world's one material language. */
   private lambert(color: number, emissive: number): MeshLambertMaterial {
-    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68), 2) });
+    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68)) });
     if (emissive > 0) {
       material.emissive.setHex(color);
       material.emissiveIntensity = emissive;

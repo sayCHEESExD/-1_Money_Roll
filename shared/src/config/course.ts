@@ -149,7 +149,11 @@ interface StageTuning {
   readonly winReward: number;
 }
 
-const STAGE_TUNING: readonly StageTuning[] = [
+/** How many stages the river has. Stage 30 is the last island. */
+export const STAGE_COUNT = 30;
+
+/** The first six, as they were tuned by hand. */
+const HAND_TUNED: readonly StageTuning[] = [
   { theme: 'grass', crossCost: 500, winReward: 5 },
   { theme: 'sand', crossCost: 2_500, winReward: 15 },
   { theme: 'snow', crossCost: 15_000, winReward: 40 },
@@ -157,6 +161,35 @@ const STAGE_TUNING: readonly StageTuning[] = [
   { theme: 'volcanic', crossCost: 250_000, winReward: 300 },
   { theme: 'gold', crossCost: 1_000_000, winReward: 1_000 },
 ];
+
+/** Cost and reward growth per stage past the hand-tuned six. */
+const COST_GROWTH = 1.8;
+const REWARD_GROWTH = 1.6;
+const THEME_CYCLE: readonly IslandTheme[] = ['grass', 'sand', 'snow', 'jungle', 'volcanic', 'gold'];
+
+/** Round to two significant figures, so a sign reads "5.8M" and not "5,832,000". */
+const twoFigures = (value: number): number => {
+  const scale = 10 ** (Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / scale) * scale;
+};
+
+/**
+ * THE THIRTY STAGES: the six hand-tuned ones, then the ladder continued at a
+ * steady ratio - each crossing 1.8x the last, each island's Wins 1.6x - with
+ * the six biomes cycling so no two neighbours share one. Stage 30 costs about
+ * 1.3T to cross and pays about 79M Wins.
+ */
+const STAGE_TUNING: readonly StageTuning[] = Array.from({ length: STAGE_COUNT }, (_, i) => {
+  const tuned = HAND_TUNED[i];
+  if (tuned) return tuned;
+  const last = HAND_TUNED[HAND_TUNED.length - 1] as StageTuning;
+  const steps = i - (HAND_TUNED.length - 1);
+  return {
+    theme: THEME_CYCLE[i % THEME_CYCLE.length] as IslandTheme,
+    crossCost: twoFigures(last.crossCost * COST_GROWTH ** steps),
+    winReward: twoFigures(last.winReward * REWARD_GROWTH ** steps),
+  };
+});
 
 /** Where the first lava begins: the end of the apron. */
 export const COURSE_START_Z: number = COURSE.hubMaxZ + COURSE.apronLength;

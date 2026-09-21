@@ -18,6 +18,8 @@ export interface PlayerAudioInput {
   readonly justBuilt: number;
   readonly justCrossed: number;
   readonly isDying: boolean;
+  /** The money ball's drawn radius; 0 when there is no ball. */
+  readonly ballRadius: number;
 }
 
 /**
@@ -45,6 +47,7 @@ export class PlayerAudio {
       }
       this.stride = 0;
       this.audio.setFootsteps(false, 0);
+      this.audio.setRolling(false, 0);
       return;
     }
     this.wasDying = false;
@@ -58,6 +61,8 @@ export class PlayerAudio {
 
     const pace = player.horizontalSpeed;
     const walking = player.isGrounded && pace >= MIN_AUDIBLE_SPEED;
+    // The ball rolls only while there IS one and the player is pushing it along.
+    this.audio.setRolling(walking && player.ballRadius > 0.05, pace / Math.max(1, player.maxRunSpeed));
     const looped = this.audio.setFootsteps(walking, pace / Math.max(1, player.maxRunSpeed));
     if (!walking || looped) {
       this.stride = 0;

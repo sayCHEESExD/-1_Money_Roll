@@ -32,8 +32,10 @@ const start = (x, z, cash = 0, trainingUnlocked = 0) => {
   S.resetMotion(motion, x, S.COURSE.floorY, z, 0);
   const bridge = S.createBridgeState();
   // The PERMANENT bills. The crossing supply (`bridge.cash`) is loaded from
-  // them at the lava's edge and is what a crossing spends.
+  // them at the lava's edge and is what a crossing spends - through a ball
+  // the meadow made, which every run here has unless it says otherwise.
   bridge.wallet = cash;
+  bridge.active = cash > 0;
   const params = { moveMultiplier: 1, jumpVelocity: S.MOVEMENT.jumpVelocity, time: 0, trainingUnlocked, bridge };
   return { motion, params, bridge, log: { built: 0, spent: 0, crossed: 0, starved: false } };
 };
@@ -60,7 +62,11 @@ const walk = (run, input, seconds) => {
 console.log('layout');
 {
   const stages = S.STAGES;
-  check(stages.length >= 6, `${stages.length} stages are defined`);
+  check(stages.length === 30 && S.STAGE_COUNT === 30, `exactly ${stages.length} stages are defined`);
+  check(stages.every((s) => Number.isFinite(s.crossCost) && s.crossCost > 0 && Number.isInteger(s.winReward) && s.winReward > 0), 'every stage has a cross cost and a Wins reward');
+  check(stages[29].index === 30 && stages[29].crossCost < 1e13, `Stage 30 is the last, at ${S.formatCash(stages[29].crossCost)} to cross for ${S.formatWins(stages[29].winReward)} Wins`);
+  check(stages.slice(0, 6).every((s, i) => s.crossCost === [500, 2500, 15000, 60000, 250000, 1000000][i] && s.winReward === [5, 15, 40, 100, 300, 1000][i]), 'the first six stages keep their hand-tuned values');
+  check(stages.every((s, i) => i === 0 || s.theme !== stages[i - 1].theme), 'no two neighbouring islands share a biome');
   check(stages[0].winReward === 5, 'Stage 1 awards +5 Wins');
   let sequential = true;
   let cursor = S.COURSE_START_Z;
@@ -195,6 +201,16 @@ console.log('turning back');
   check(back.bridge.cells.size >= laid && back.bridge.cells.size <= laid + 1, `notes already laid are KEPT when the player retreats (${laid} -> ${back.bridge.cells.size})`);
   check(near(back.log.spent, back.bridge.cells.size * S.cellCost(1)), 'and walking back over them charges nothing: the spend is exactly the cells laid');
   check(back.motion.z < S.COURSE_START_Z && back.motion.crossing === 0, 'the player is back on the bank with the crossing flag cleared');
+}
+
+console.log('no ball, no crossing');
+{
+  // Bills in the wallet but no ball made in the meadow: the lava's edge starves the player.
+  const run = start(0, S.COURSE_START_Z - 6, S.STAGES[0].crossCost + 100);
+  run.bridge.active = false;
+  walk(run, { moveZ: 1 }, 6);
+  check(run.log.starved && run.fell && run.log.built === 0, 'a player who skipped the meadow cannot cross, however many bills they hold');
+  check(near(run.bridge.wallet, S.STAGES[0].crossCost + 100), 'and loses none of them');
 }
 
 console.log('the same bills cross again');

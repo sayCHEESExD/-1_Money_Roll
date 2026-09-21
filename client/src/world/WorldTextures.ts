@@ -149,11 +149,11 @@ export class WorldTextures {
   /**
    * BLOCK WALLS: the same square-stud language as the floor, at wall scale.
    *
-   * Two big blocks to a tile, each a rounded square outlined in the seam
-   * colour with a bevel - a light top-left edge and a dark bottom-right - so
-   * a wall reads as stacked toy blocks rather than as mortar and brick, and
-   * still reads as a different, chunkier material than the ground it stands
-   * on.
+   * Four blocks to a tile - the same pitch as the floor's studs - each a
+   * rounded square outlined in the seam colour with a bevel, a light top-left
+   * edge and a dark bottom-right, so a wall reads as stacked toy blocks
+   * rather than as mortar and brick, and still as a different, chunkier
+   * material than the ground it stands on.
    */
   brick(base: string, seam: string): Texture {
     return this.cached(`blocks:${base}:${seam}`, () => {
@@ -161,7 +161,7 @@ export class WorldTextures {
       const ctx = context(size);
       ctx.fillStyle = seam;
       ctx.fillRect(0, 0, size, size);
-      const cells = 2;
+      const cells = 4;
       const pitch = size / cells;
       const inset = pitch * 0.07;
       const block = pitch - inset * 2;

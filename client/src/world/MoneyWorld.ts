@@ -45,10 +45,10 @@ import { StageSigns } from './StageSigns.js';
 import { TrainingZones } from './TrainingZones.js';
 import { WinTrophies } from './WinTrophies.js';
 import { worldTextures } from './WorldTextures.js';
-import { texturedBox } from './texturedBox.js';
+import { STUD_TILE, texturedBox } from './texturedBox.js';
 
 /** World units one repeat of a stud texture covers. Four studs to it. */
-const TILE = 6;
+const TILE = STUD_TILE;
 
 /** How many money stacks the meadow is scattered with. Instanced: one draw. */
 const STACK_COUNT = 1700;
@@ -224,7 +224,7 @@ export class MoneyWorld {
           );
           break;
         case 'billPad':
-          parts = into('pad', () => this.studMaterial(PALETTE.pad, PALETTE.padEdge, 2), true);
+          parts = into('pad', () => this.studMaterial(PALETTE.pad, PALETTE.padEdge), true);
           break;
         case 'deck':
         case 'stair':
@@ -234,7 +234,7 @@ export class MoneyWorld {
           parts = into('training', () => this.studMaterial(PALETTE.sand, PALETTE.sandEdge), true);
           break;
         case 'pedestal':
-          parts = into('pedestal', () => this.studMaterial(PALETTE.pedestal, PALETTE.pedestalEdge, 2), true);
+          parts = into('pedestal', () => this.studMaterial(PALETTE.pedestal, PALETTE.pedestalEdge), true);
           break;
         case 'plinth':
           parts = into('plinth', () => this.studMaterial(PALETTE.plinth, PALETTE.plinthEdge), true);
@@ -316,8 +316,9 @@ export class MoneyWorld {
     const chests: BufferGeometry[] = [];
     const gold: BufferGeometry[] = [];
 
+    // World-scaled UVs, so a tree's studs are the floor's studs.
     const box = (into: BufferGeometry[], w: number, h: number, d: number, x: number, y: number, z: number, ry = 0): void => {
-      const geometry = new BoxGeometry(w, h, d);
+      const geometry = texturedBox(w, h, d, TILE);
       geometry.rotateY(ry);
       geometry.translate(x, y, z);
       into.push(geometry);
@@ -436,11 +437,11 @@ export class MoneyWorld {
       const cz = (COURSE.hubMinZ + COURSE_END_Z) / 2 + Math.sin(angle) * (distance + 140);
       const w = 40 + random() * 60;
       const h = 14 + random() * 26;
-      const base = texturedBox(w, h, w * (0.7 + random() * 0.6), TILE * 3);
+      const base = texturedBox(w, h, w * (0.7 + random() * 0.6), TILE);
       base.rotateY(random() * Math.PI);
       base.translate(cx, COURSE.floorY - 4 + h / 2, cz);
       hills.push(base);
-      const cap = texturedBox(w * 0.6, h * 0.5, w * 0.5, TILE * 3);
+      const cap = texturedBox(w * 0.6, h * 0.5, w * 0.5, TILE);
       cap.translate(cx, COURSE.floorY - 4 + h + h * 0.2, cz);
       hillsDark.push(cap);
     }
@@ -493,7 +494,7 @@ export class MoneyWorld {
    * in colour and glow - which is what "same material system" means.
    */
   private propMaterial(color: number, emissive = 0): Material {
-    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68), 2) });
+    const material = new MeshLambertMaterial({ map: worldTextures.studs(css(color), shade(color, 0.68)) });
     if (emissive > 0) {
       material.emissive.setHex(color);
       material.emissiveIntensity = emissive;

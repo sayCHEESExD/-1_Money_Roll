@@ -469,7 +469,7 @@ export class Game {
   private onPlayerAdded(sessionId: string, state: NetPlayerState): void {
     if (sessionId === this.localSessionId) {
       this.applyLocalState(state);
-      this.localPlayer?.character.ball.snap(state.cash);
+      this.localPlayer?.character.ball.snap(state.ballActive ? state.cash : 0);
       return;
     }
     this.remotePlayers.add(sessionId, state);
@@ -512,6 +512,7 @@ export class Game {
         crossing: state.crossing,
         cash: state.cash,
         crossingCash: state.crossingCash,
+        ballActive: state.ballActive,
         bridge: state.bridge,
       });
       if (player.bridgeCells.size !== this.lastLocalBridgeSize) this.bridgeVersion += 1;
