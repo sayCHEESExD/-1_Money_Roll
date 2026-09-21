@@ -55,6 +55,5 @@ client-dist.zip
 *.log
 .env
 .DS_Store
-netlify.toml
 README.md
 CLAUDE.md

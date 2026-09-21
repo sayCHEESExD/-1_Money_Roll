@@ -22,6 +22,13 @@ npm run verify:persistence  # spawns its own servers: guests, accounts, restarts
 
 ## Deploy
 
-`Dockerfile` builds the whole monorepo and serves the client from the server; `.github/workflows/deploy.yml` is the Bloxity pipeline. Environment: `PORT`, `MONGODB_URI`, `MONEY_DATA_DIR`, `BLOXITY_GAME_ID` (`money-escape`).
+Bloxity Hosting, game id `money-roll`, from `.github/workflows/deploy.yml`:
+
+| branch | channel | backend | frontend |
+| --- | --- | --- | --- |
+| `dev` | dev | `wss://money-roll.dev.host.bloxity.io` | `https://money-roll.dev.play.bloxity.io` |
+| `main` | prod | `wss://money-roll.host.bloxity.io` | `https://money-roll.play.bloxity.io` |
+
+The workflow builds the Colyseus server into a GHCR image (`Dockerfile`, built from the repository root so `@money/shared` resolves), rolls it through Legion with the commit SHA as the version, then builds the Vite client with that channel's backend URL baked in and uploads it as a zip. It needs one repository secret, `LEGION_DEPLOY_TOKEN` (My Games on hosting.bloxity.io, the eye icon). Legion injects `PORT`, `MONGODB_URI`, `BLOXITY_GAME_ID` and `POD_NAME`; the server answers `GET /health` and runs as `node`.
 
 See `CLAUDE.md` for the layout, the rules that must not drift, and where everything is.

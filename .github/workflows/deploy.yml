@@ -12,11 +12,12 @@
 # bundle that failed to upload leaves players on the previous one, which is a
 # far better outcome than a half-deployed pair.
 #
-# Both routes below are the ones documented at https://hosting.bloxity.io/docs,
-# and both were checked against the live API before being written here:
+# Both routes below are the ones documented at https://hosting.bloxity.io/docs
+# (re-read on 2026-09-21), and both were checked against the live API for THIS
+# game id before being written here:
 #
-#   POST https://legion.bloxity.io/v1/apps/<gameId>/deploy          -> 401
-#   POST https://api.bloxity.io/v1/hosting/games/<gameId>/frontend  -> 401
+#   POST https://legion.bloxity.io/v1/apps/money-roll/deploy          -> 401
+#   POST https://api.bloxity.io/v1/hosting/games/money-roll/frontend  -> 401
 #
 # 401 rather than 404 is the point: an unauthenticated request proves the route
 # EXISTS without deploying anything. A deliberately invented neighbour of each
@@ -49,7 +50,7 @@ env:
   # THE GAME ID REGISTERED ON BLOXITY. Every route, every hostname and the
   # image name are built from this one string, so a game renamed on Bloxity is
   # a one-line change here.
-  BLOXITY_GAME_ID: money-escape
+  BLOXITY_GAME_ID: money-roll
 
   # The room's player cap, and the same number as MAX_PLAYERS_PER_ROOM. Legion
   # fills a pod to seatCap and then spawns the next one, so this MUST equal the
@@ -200,7 +201,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # Matches the engines field and the Netlify build.
+          # Matches the engines field and the Dockerfile's base image.
           node-version: '20'
           cache: npm
 
@@ -224,7 +225,7 @@ jobs:
           # because the page is served over https and a browser will not open
           # an insecure socket from a secure page. These are the documented
           # Bloxity backend hostnames for this game id.
-          VITE_SERVER_URL: ${{ needs.channel.outputs.name == 'prod' && 'wss://money-escape.host.bloxity.io' || 'wss://money-escape.dev.host.bloxity.io' }}
+          VITE_SERVER_URL: ${{ needs.channel.outputs.name == 'prod' && 'wss://money-roll.host.bloxity.io' || 'wss://money-roll.dev.host.bloxity.io' }}
         run: |
           set -euo pipefail
           echo "VITE_BLOXITY_GAME_ID=$VITE_BLOXITY_GAME_ID"
