@@ -18,15 +18,11 @@ import {
   BoxGeometry,
   CylinderGeometry,
   Group,
-  InstancedMesh,
-  Matrix4,
   Mesh,
   MeshLambertMaterial,
   OctahedronGeometry,
-  Quaternion,
   Scene,
   SphereGeometry,
-  Vector3,
   type BufferGeometry,
   type Material,
   type Texture,
@@ -43,6 +39,7 @@ import { Sky } from './Sky.js';
 import { StageReveal } from './StageReveal.js';
 import { StageSigns } from './StageSigns.js';
 import { TrainingZones } from './TrainingZones.js';
+import { MeadowField } from './MeadowField.js';
 import { WinTrophies } from './WinTrophies.js';
 import { worldTextures } from './WorldTextures.js';
 import { STUD_TILE, texturedBox } from './texturedBox.js';
@@ -50,8 +47,6 @@ import { STUD_TILE, texturedBox } from './texturedBox.js';
 /** World units one repeat of a stud texture covers. Four studs to it. */
 const TILE = STUD_TILE;
 
-/** How many money stacks the meadow is scattered with. Instanced: one draw. */
-const STACK_COUNT = 1700;
 
 const WIN_GLOW = { base: 0.3, swing: 0.3, rate: 2.1 } as const;
 
@@ -81,8 +76,8 @@ export class MoneyWorld {
 
   private readonly materials: Material[] = [];
   private readonly geometries: BufferGeometry[] = [];
-  private meadowMaterial: MeshLambertMaterial | null = null;
-  private stackMaterial: MeshLambertMaterial | null = null;
+  /** The stacks of notes on the meadow: collected under a player, grown back after. */
+  readonly meadow = new MeadowField();
   private winPadMaterial: MeshLambertMaterial | null = null;
   private lavaMaterial: MeshLambertMaterial | null = null;
   private winReveal: StageReveal | null = null;
@@ -92,7 +87,7 @@ export class MoneyWorld {
   constructor() {
     this.buildSolids();
     this.buildLava();
-    this.buildMeadowStacks();
+    this.root.add(this.meadow.mesh);
     this.buildDecorations();
     this.buildHubWalls();
     this.buildHorizon();
@@ -124,20 +119,12 @@ export class MoneyWorld {
     this.winReveal?.revealNear(z);
   }
 
-  /** The equipped bill decides the colour of the meadow and every stack in it. */
+  /** The equipped bill decides the colour of every stack in the meadow. */
   setBillSlot(slot: number): void {
     if (slot === this.billSlot) return;
     this.billSlot = slot;
     const bill = billForSlot(slot);
-    const map = worldTextures.bills(css(bill.color), css(bill.ink));
-    if (this.meadowMaterial) {
-      this.meadowMaterial.map = map;
-      this.meadowMaterial.needsUpdate = true;
-    }
-    if (this.stackMaterial) {
-      this.stackMaterial.map = map;
-      this.stackMaterial.needsUpdate = true;
-    }
+    this.meadow.setMap(worldTextures.bills(css(bill.color), css(bill.ink)));
   }
 
   update(delta: number, elapsed: number, viewerX: number, viewerZ: number): void {
@@ -146,6 +133,7 @@ export class MoneyWorld {
     if (this.winPadMaterial) this.winPadMaterial.emissiveIntensity = WIN_GLOW.base + breath * WIN_GLOW.swing;
     if (this.lavaMaterial) this.lavaMaterial.emissiveIntensity = 0.55 + breath * 0.25;
     this.stands.update(delta, viewerX, viewerZ);
+    this.meadow.update(delta, elapsed);
     this.zones.update(delta);
     this.shop.update(delta);
     this.pickups.advance(delta, elapsed);
@@ -156,6 +144,7 @@ export class MoneyWorld {
     for (const material of this.materials) material.dispose();
     for (const geometry of this.geometries) geometry.dispose();
     this.winReveal?.dispose();
+    this.meadow.dispose();
     this.stands.dispose();
     this.zones.dispose();
     this.shop.dispose();
@@ -188,16 +177,8 @@ export class MoneyWorld {
           parts = into('lobby', () => this.studMaterial(PALETTE.grass, PALETTE.grassEdge), false);
           break;
         case 'meadow':
-          parts = into(
-            'meadow',
-            () => {
-              const material = new MeshLambertMaterial({ map: worldTextures.bills('#46d66a', '#1d7a36') });
-              this.materials.push(material);
-              this.meadowMaterial = material;
-              return material;
-            },
-            false,
-          );
+          // A grass field: the bills are the stacks standing on it.
+          parts = into('meadow', () => this.studMaterial(PALETTE.grass, PALETTE.grassEdge), false);
           break;
         case 'island': {
           const stage = STAGES[solid.stage - 1];
@@ -262,42 +243,6 @@ export class MoneyWorld {
     this.materials.push(material);
     this.lavaMaterial = material;
     this.addMerged(parts, material, false, false);
-  }
-
-  /**
-   * THE MONEY MEADOW'S CASH: seventeen hundred stacks of notes as ONE
-   * instanced mesh. Scattered deterministically, a third of them doubled up
-   * into taller piles, all of them the equipped bill's colour.
-   */
-  private buildMeadowStacks(): void {
-    const geometry = new BoxGeometry(1.5, 0.5, 1.0);
-    this.geometries.push(geometry);
-    const material = new MeshLambertMaterial({ map: worldTextures.bills('#46d66a', '#1d7a36') });
-    this.materials.push(material);
-    this.stackMaterial = material;
-
-    const mesh = new InstancedMesh(geometry, material, STACK_COUNT);
-    mesh.receiveShadow = true;
-    const random = seeded(0x2a5c);
-    const matrix = new Matrix4();
-    const position = new Vector3();
-    const rotation = new Quaternion();
-    const scale = new Vector3();
-    const up = new Vector3(0, 1, 0);
-    for (let i = 0; i < STACK_COUNT; i += 1) {
-      const x = COURSE.meadowMinX + 1 + random() * (COURSE.meadowMaxX - COURSE.meadowMinX - 2);
-      const z = COURSE.meadowMinZ + 1 + random() * (COURSE.meadowMaxZ - COURSE.meadowMinZ - 2);
-      const tier = random();
-      const layers = tier > 0.7 ? 2 : 1;
-      const y = COURSE.floorY + 0.25 + (layers - 1) * 0.25;
-      position.set(x, y, z);
-      rotation.setFromAxisAngle(up, random() * Math.PI * 2);
-      scale.set(0.85 + random() * 0.4, layers, 0.85 + random() * 0.4);
-      matrix.compose(position, rotation, scale);
-      mesh.setMatrixAt(i, matrix);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
-    this.root.add(mesh);
   }
 
   /** The scenery: palms, trees, rocks, crystals, cacti, mushrooms, lamps and chests, merged per material. */

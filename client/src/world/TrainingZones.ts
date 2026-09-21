@@ -173,29 +173,38 @@ export class TrainingZones {
       this.zones.push({ index: zone.index, lock, lockSign, rim, rimMaterial, lamps });
     }
 
-    // The area's board, behind the pads on two posts, high enough that no
-    // zone's sign is ever drawn across it from the meadow.
+    // The area's board, behind the pads, high enough that no zone's sign is
+    // ever drawn across it from the meadow. The panel faces +X; its two posts
+    // and the crossbar stand entirely BEHIND the backing plate, so nothing
+    // passes through the face.
     const boardX = TRAINING.x - 14;
     const boardZ = trainingZoneZ(2);
-    const post = texturedBox(1.2, 24, 1.2, STUD_TILE);
-    this.geometries.push(post);
+    const boardY = 23;
+    const backingThickness = 1.4;
     const postMaterial = this.lambert(INK, 0);
+    const post = texturedBox(1.2, boardY + 6, 1.2, STUD_TILE);
+    this.geometries.push(post);
+    const postX = boardX - backingThickness - 0.2;
     for (const dz of [-14, 14]) {
       const mesh = new Mesh(post, postMaterial);
-      mesh.position.set(boardX, 12, boardZ + dz);
+      mesh.position.set(postX, (boardY + 6) / 2, boardZ + dz);
       this.root.add(mesh);
     }
+    const crossbar = new Mesh(texturedBox(1.2, 1.2, 30, STUD_TILE), postMaterial);
+    crossbar.position.set(postX, boardY - 7, boardZ);
+    this.root.add(crossbar);
+    const backing = new Mesh(texturedBox(backingThickness, 12, 36, STUD_TILE), this.lambert(0x5ee0ff, 0.1));
+    backing.position.set(boardX - backingThickness / 2, boardY, boardZ);
+    this.root.add(backing);
     const board = new CanvasSign(34, 12, [
       { text: 'TRAIN ZONES', size: 1, fill: '#ffffff', stroke: '#1c2233', strokeWidth: 0.16 },
       { text: 'AFK for free CASH!', size: 0.55, fill: '#7fe6ff', stroke: '#1c2233', strokeWidth: 0.14 },
     ]);
-    board.mesh.position.set(boardX + 0.8, 23, boardZ);
+    // A hair proud of the backing's face: never in it, never floating off it.
+    board.mesh.position.set(boardX + 0.03, boardY, boardZ);
     board.mesh.rotation.y = Math.PI / 2;
     this.root.add(board.mesh);
     this.signs.push(board);
-    const backing = new Mesh(texturedBox(1.4, 12, 36, STUD_TILE), this.lambert(0x5ee0ff, 0.1));
-    backing.position.set(boardX - 0.4, 23, boardZ);
-    this.root.add(backing);
 
     this.setRebirths(0);
   }
@@ -266,21 +275,45 @@ export class TrainingZones {
     const trunk = this.lambert(style.trunk, 0);
     const glassMaterial = this.facade(style.glass);
 
-    // The ground of each block, then the crossroads over it.
-    put(ground, box(TRAINING.size, 0.06, TRAINING.size), 0, 0.03, 0);
-    put(road, box(TRAINING.size, 0.1, 4.2), 0, 0.05, 0);
-    put(road, box(4.2, 0.1, TRAINING.size), 0, 0.05, 0);
+    /*
+     * THE CROSSROADS, TILED RATHER THAN STACKED. Nothing here shares a face
+     * with anything else: the road along X is one slab, the road along Z is
+     * two slabs that stop at its edges, each block's ground is its own slab
+     * that stops at the kerb, and the kerbs stand a hair off the road edge.
+     * Every slab lifts a hair above the pad, so no face is coplanar with the
+     * pad's top either. That is what keeps the surfaces from fighting.
+     */
+    const half = TRAINING.size / 2;
+    const roadHalf = 2.1;
+    const kerbW = 1.1;
+    const gap = 0.05;
+    const lift = 0.02;
+    const roadTop = lift + 0.08;
+    // The road along X, full length; the road along Z in two halves that stop at it.
+    put(road, box(TRAINING.size, roadTop - lift, roadHalf * 2), 0, (lift + roadTop) / 2, 0);
+    for (const sz of [-1, 1]) {
+      const length = half - roadHalf;
+      put(road, box(roadHalf * 2, roadTop - lift, length), 0, (lift + roadTop) / 2, sz * (roadHalf + length / 2));
+    }
+    // Centre dashes, sat on the road and clear of the crossing.
     for (let t = -8.4; t <= 8.4; t += 2.4) {
-      if (Math.abs(t) < 3) continue;
-      put(line, box(1.2, 0.03, 0.2), t, 0.115, 0);
-      put(line, box(0.2, 0.03, 1.2), 0, 0.115, t);
+      if (Math.abs(t) < roadHalf + 0.9) continue;
+      put(line, box(1.2, 0.03, 0.2), t, roadTop + 0.015, 0);
+      put(line, box(0.2, 0.03, 1.2), 0, roadTop + 0.015, t);
     }
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
-        // Kerbs along both roads, on the block's two road-facing sides.
-        put(kerb, box(7.6, 0.16, 1.1), sx * 6.2, 0.08, sz * 2.65);
-        put(kerb, box(1.1, 0.16, 7.6), sx * 2.65, 0.08, sz * 6.2);
-        put(kerb, box(1.1, 0.16, 1.1), sx * 2.65, 0.08, sz * 2.65);
+        // The block's own ground: from the kerb's outer edge to the pad's edge.
+        const inner = roadHalf + gap + kerbW;
+        const groundSpan = half - inner;
+        put(ground, box(groundSpan, 0.08, groundSpan), sx * (inner + groundSpan / 2), lift + 0.04, sz * (inner + groundSpan / 2));
+        // Kerbs: an L along the block's two road-facing sides, the two arms meeting without overlap.
+        const kerbInner = roadHalf + gap;
+        const kerbMid = kerbInner + kerbW / 2;
+        const armAlongX = half - kerbInner;
+        put(kerb, box(armAlongX, 0.14, kerbW), sx * (kerbInner + armAlongX / 2), lift + 0.07, sz * kerbMid);
+        const armAlongZ = half - (kerbInner + kerbW);
+        put(kerb, box(kerbW, 0.14, armAlongZ), sx * kerbMid, lift + 0.07, sz * (kerbInner + kerbW + armAlongZ / 2));
 
         // The tall building at the back corner.
         const rise = style.rise[0] + random() * (style.rise[1] - style.rise[0]);
@@ -289,7 +322,7 @@ export class TrainingZones {
         const bx = sx * (10 - bw / 2 - 0.2);
         const bz = sz * (10 - bd / 2 - 0.2);
         const wall = this.facade(pick(style.buildings));
-        put(wall, texturedBox(bw, rise, bd, STUD_TILE / 2), bx, rise / 2 + 0.06, bz);
+        put(wall, texturedBox(bw, rise, bd, STUD_TILE / 2), bx, rise / 2 + lift + 0.08, bz);
         const roofColour = pick(style.roofs);
         put(this.lambert(roofColour, 0), box(bw + 0.4, 0.3, bd + 0.4), bx, rise + 0.2, bz);
         if (style.towers) {
@@ -311,7 +344,7 @@ export class TrainingZones {
         const sxPos = sx * 4.4;
         const szPos = sz * (10 - sd / 2 - 0.2);
         const shopWall = this.facade(pick(style.buildings));
-        put(shopWall, texturedBox(sw, sh, sd, STUD_TILE / 2), sxPos, sh / 2 + 0.06, szPos);
+        put(shopWall, texturedBox(sw, sh, sd, STUD_TILE / 2), sxPos, sh / 2 + lift + 0.08, szPos);
         put(this.lambert(pick(style.roofs), 0), box(sw + 0.3, 0.24, sd + 0.3), sxPos, sh + 0.18, szPos);
         // The door and the awning face the road along Z (toward the crossroads).
         const face = -sz;

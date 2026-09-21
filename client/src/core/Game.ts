@@ -435,6 +435,20 @@ export class Game {
     this.world.scoreboard.update(this.network.leaderboard);
     this.world.pickups.apply(this.network.pickups);
     this.pops.update(delta);
+    // Whoever walks the meadow clears the stacks under them, and under their ball.
+    if (player && !player.isDying) {
+      this.world.meadow.collect(player.position.x, player.position.z, 2.0);
+      const ball = player.ballRadius;
+      if (ball > 0.1) {
+        const yaw = player.character.root.rotation.y;
+        const ahead = ball + 0.55;
+        this.world.meadow.collect(player.position.x + Math.sin(yaw) * ahead, player.position.z + Math.cos(yaw) * ahead, ball * 0.9);
+      }
+    }
+    for (const remote of this.remotePlayers.drawn()) {
+      const at = remote.character.root.position;
+      this.world.meadow.collect(at.x, at.z, 2.0);
+    }
     this.world.update(delta, elapsed, player?.position.x ?? SPAWN_POSITION.x, player?.position.z ?? SPAWN_POSITION.z);
     this.remotePlayers.advance(delta, player?.position ?? null);
     this.camera.update(delta, player?.horizontalSpeed ?? 0);

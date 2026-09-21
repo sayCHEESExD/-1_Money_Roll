@@ -122,28 +122,38 @@ export class BillStands {
       this.stands.push({ slot: bill.slot, face, beam, beamMaterial, note });
     }
 
-    // The area's board, behind the back row on two posts, as the reference has it.
+    // The area's board, behind the back row, as the reference has it. The
+    // panel faces -X (the meadow); its posts and crossbar stand entirely
+    // BEHIND the backing plate, so nothing passes through the face.
     const boardX = BILL_ROW.deckMaxX + 2;
     const boardZ = (BILL_ROW.firstZ + BILL_ROW.firstZ + BILL_ROW.spacingZ * (BILL_ROW.perRow - 1)) / 2;
-    const post = texturedBox(1.2, 22, 1.2, STUD_TILE);
+    const boardY = BILL_ROW.deckY + 19;
+    const backingThickness = 1.4;
+    const postHeight = boardY + 6 - BILL_ROW.deckY;
+    const post = texturedBox(1.2, postHeight, 1.2, STUD_TILE);
     this.geometries.push(post);
     const postMaterial = this.lambert(0x2b3554, 0);
+    const postX = boardX + backingThickness + 0.2;
     for (const dz of [-14, 14]) {
       const mesh = new Mesh(post, postMaterial);
-      mesh.position.set(boardX, BILL_ROW.deckY + 11, boardZ + dz);
+      mesh.position.set(postX, BILL_ROW.deckY + postHeight / 2, boardZ + dz);
       this.root.add(mesh);
     }
+    const crossbar = new Mesh(texturedBox(1.2, 1.2, 30, STUD_TILE), postMaterial);
+    crossbar.position.set(postX, boardY - 7, boardZ);
+    this.root.add(crossbar);
+    const backing = new Mesh(texturedBox(backingThickness, 12, 36, STUD_TILE), this.lambert(0xf0c95a, 0.1));
+    backing.position.set(boardX + backingThickness / 2, boardY, boardZ);
+    this.root.add(backing);
     const board = new CanvasSign(34, 12, [
       { text: 'BILLS', size: 1, fill: '#ffffff', stroke: '#1c2233', strokeWidth: 0.16 },
       { text: 'EARN money FASTER!', size: 0.55, fill: '#ffe08a', stroke: '#1c2233', strokeWidth: 0.14 },
     ]);
-    board.mesh.position.set(boardX - 0.8, BILL_ROW.deckY + 19, boardZ);
+    // A hair proud of the backing's face: never in it, never floating off it.
+    board.mesh.position.set(boardX - 0.03, boardY, boardZ);
     board.mesh.rotation.y = -Math.PI / 2;
     this.root.add(board.mesh);
     this.signs.push(board);
-    const backing = new Mesh(texturedBox(1.4, 12, 36, STUD_TILE), this.lambert(0xf0c95a, 0.1));
-    backing.position.set(boardX + 0.4, BILL_ROW.deckY + 19, boardZ);
-    this.root.add(backing);
 
     this.apply();
   }
